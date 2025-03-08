@@ -10,6 +10,7 @@ import pandas as pd
 import structlog
 import uvicorn
 from fastapi import APIRouter, FastAPI
+from fastapi_utils.tasks import repeat_every
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
@@ -158,6 +159,14 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+#@app.on_event('startup')
+#@repeat_every(seconds=3)
+#async def create_and_update_vector_store():
+#    global _STATUS
+#    _STATUS += 1
+
+# ^ Want to use this function to update the vector store on startup and every hour
 
 
 def start() -> None:

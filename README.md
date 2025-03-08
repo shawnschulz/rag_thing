@@ -4,7 +4,8 @@
 # rag-thing
 
 ```
-pip install -q langchain-openai langchain playwright beautifulsoup4 langchain-google-genai
+pip install -q langchain-openai langchain playwright beautifulsoup4 langchain-google-genai pydantic structlog google-generativeai
+
 playwright install
 ```
 # Flare AI RAG
