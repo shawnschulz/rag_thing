@@ -93,6 +93,8 @@ class ChatRequest(TypedDict):
     model: str
     messages: list[Message]
 
+# Somewhere either in here or using these classes in main.py
+# we need to set up an additional route for the extraction dashboard
 
 class BaseClient:
     """A base class to handle HTTP requests and common logic for API interaction."""

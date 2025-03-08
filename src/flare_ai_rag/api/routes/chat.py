@@ -158,6 +158,11 @@ class ChatRouter:
         Returns:
             dict[str, str]: Response containing attestation request
         """
+
+        # Should edit this route to include information about the top documents retrieved,
+        # and make sure the front end client updates that part of the ui along with 
+        # the messages in the chatbot
+
         # Step 1. Classify the user query.
         prompt, mime_type, schema = self.prompts.get_formatted_prompt("rag_router")
         classification = self.query_router.route_query(
