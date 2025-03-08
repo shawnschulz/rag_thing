@@ -10,6 +10,9 @@ from flare_ai_rag.retriever.config import RetrieverConfig
 
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chat_models import init_chat_model
+from google.generativeai.generative_models import ChatSession, GenerativeModel
+from google.generativeai.client import configure
+
 
 from fastembed import TextEmbedding
 
@@ -59,34 +62,31 @@ class QdrantRetriever(BaseRetriever):
 ### payload={'text': 'To optimize Qdrant for minimizing latency in search requests, you can set up the system to use as many cores as possible for a single request. This can be achieved by setting the number of segments in the collection to be equal to the number of cores in the system. By doing this, each segment will be processed in parallel, leading to a faster final result. This approach allows for the efficient utilization of system resources and can significantly reduce the time taken from the moment a request is submitted to the moment a response is received. By optimizing for latency in this manner, you can enhance the overall speed and responsiveness of the search functionality in Qdrant.'}, 
 ### vector=None, shard_key=None, order_value=None)
 # ]
-        prompt = f"""You are an expert to generate new questions from user questions. \
+        SYSTEM_INSTRUCTION = f"""
+        You are an expert to generate new questions from user questions. 
 
-        Perform query expansion. If there are multiple common ways of phrasing a user question \
-        or common synonyms for key words in the question, make sure to return multiple versions \
-        of the query with the different phrasings. \
+        Perform query expansion. If there are multiple common ways of phrasing a user question 
+        or common synonyms for key words in the question, make sure to return multiple versions 
+        of the query with the different phrasings. 
 
-        If there are acronyms or words you are not familiar with, do not try to rephrase them. \
+        If there are acronyms or words you are not familiar with, do not try to rephrase them. 
 
-        Return 3 versions of the question: {query} \
+        Return 3 versions of the question: {query} 
 
-        The Answer MUST be a list, clean your answer, trim them and don't add anything like bullets.""" 
-        prompt_template = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                prompt,
-            ),
-            ("user", "{text}"),
-        ]
-    )
+        The Answer MUST be a list, clean your answer, trim them and don't add anything like bullets.
+        """
+        model_name="gemini-1.5-flash"
+        llm = GenerativeModel(
+        model_name=model_name,
+        system_instruction=SYSTEM_INSTRUCTION,
+        )
         embedding_model = TextEmbedding("BAAI/bge-small-en-v1.5")
-        llm = init_chat_model("gemini-1.5-flash", model_provider="google_genai")
-        structured_llm = llm.with_structured_output(prompt_template)
-        exp = structured_llm.invoke(prompt_template.invoke({"text": query})).to_messages()[1];
+        exp = llm.generate_content(query);
+
         exp_embeddings_list = list(embedding_model.embed(exp))
 
         #So we could use the scores to display a list of the top relevant documents on the side
-        search_result = self.client.query_points(
+        results = self.client.query_points(
             collection_name="query_exp",
             prefetch=[
                 models.Prefetch(

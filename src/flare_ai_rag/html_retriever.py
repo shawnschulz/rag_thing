@@ -26,7 +26,9 @@ return null for the attribute's value.
 
 When helping users:
 - Extract relevant information from web pages 
-- Only output the extracted information.
+- If you are unsure or don't know of any useful information from a webpage, return null for it's value. There is no need to output any explanation of why you returned null, so do not output any explanation when this occurs.
+- Always include the full text output of any articles or descriptions in documentation if they exist.
+- You seek to inform people, always output the source information in a complete, yet still succint and well presented format.
 
 """
 model_name="gemini-1.5-flash"
@@ -35,6 +37,7 @@ model_name=model_name,
 system_instruction=SYSTEM_INSTRUCTION,
 )
 
+use_llm_extractor = False
 
 def setup_argparse():
     parser = argparse.ArgumentParser(description='Crawl or scrape urls into the qdrant database')
@@ -50,6 +53,9 @@ def setup_argparse():
     parser.add_argument('--class_grep',
                         type=str,  # Can change to int, float, etc.curl -LsSf https://astral.sh/uv/install.sh | sh
                         help='Use to specify a specific keyword in webpages to enter links under')
+    parser.add_argument('--llm_extraction',
+                        action='store_true',
+                        help="Use a large language model to extract information from web pages before storing in database. NOTE: I personally feel this doesn't work as well as just scraping the whole thing")
     
     return parser.parse_args()
 
@@ -76,13 +82,17 @@ urls = ['https://flare.network/news/shaping-the-future-of-blockchain-and-ai-flar
 
 from langchain.chat_models import init_chat_model
 
-def extract(content: str):
-    return llm.generate_content(content);
+def extract(content: str, use_llm_extractor=use_llm_extractor):
+    if use_llm_extractor:
+        return llm.generate_content(content);
+    else:
+        return content
 
 import pprint
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def crawl_webpage(url, max_pages=10, class_grep="none"):
+# The string "NewsPage" works well for crawling https://flare.network/news
+def crawl_webpage(url, use_llm_extractor=use_llm_extractor, max_pages=10, class_grep="none"):
     """
     Thanks Claude!
 
@@ -155,7 +165,7 @@ def crawl_webpage(url, max_pages=10, class_grep="none"):
                             # Add to the queue if not visited yet
                             if absolute_link not in visited and absolute_link not in to_visit:
                                 # Scrape the webpage if it wasn't visited yet
-                                payloads.append(scrape_with_playwright(absolute_link))
+                                payloads.append(scrape_with_playwright(absolute_link, use_llm_extractor))
                                 to_visit.append(absolute_link)
                                 count += 1
                                 if count >= max_pages:
@@ -197,7 +207,7 @@ def crawl_webpage(url, max_pages=10, class_grep="none"):
     return payloads, visited
 # Takes a url and returns a payload to be upserted into qdrant vector database
 # Uses gemini for content extraction (albeit it doesn't particularly listen to me)
-def scrape_with_playwright(url):
+def scrape_with_playwright(url, use_llm_extractor=use_llm_extractor):
     logger.info("Attempting to scrape urls.")
     urls = [url]
     loader = AsyncChromiumLoader(urls)
@@ -215,10 +225,15 @@ def scrape_with_playwright(url):
     splits = splitter.split_documents(docs_transformed)
 
     # Process the first split
-    extracted_content = extract(content=splits[0].page_content)
+    extracted_content = extract(content=splits[0].page_content, use_llm_extractor=use_llm_extractor)
     message_output = extracted_content
     payload = {}
-    text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
+    if use_llm_extractor:
+        text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
+        payload['metadata'] = str(message_output.usage_metadata)
+    else: 
+        text_output = splits[0].page_content
+        payload['metadata'] = {'source':'website', 'extraction':'beautifulSoup'}
     #try: 
     #    payload = json.loads(text_output)
     #except json.JSONDecodeError:
@@ -226,9 +241,8 @@ def scrape_with_playwright(url):
 
     # Just put the text in the bag
     payload['text'] = text_output 
-
+    logger.info(f"Output of scraping: {text_output}")
     payload['filename'] = url
-    payload['metadata'] = str(message_output.usage_metadata)
     #pprint.pprint(payload)
     return payload 
 
@@ -309,6 +323,8 @@ if __name__ == "__main__":
     embedding_client = GeminiEmbedding(GEMINI_API_KEY)
 
     args = setup_argparse()
+    if args.llm_extraction:
+        use_llm_extractor = True
     if args.scrape is not None:
         urls = args.scrape
         payloads = [scrape_with_playwright(url) for url in urls]
@@ -319,7 +335,7 @@ if __name__ == "__main__":
     if args.crawl is not None:
         source_url = args.crawl
         if args.class_grep is not None:
-            payloads, _ = crawl_webpage(source_url, 10, args.class_grep)
+            payloads, _ = crawl_webpage(source_url, use_llm_extractor, 10, args.class_grep)
             points = load_payloads_into_points(embedding_client, payloads)
             upsert_database(qdrant_client, points)
         else:
