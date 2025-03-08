@@ -87,31 +87,47 @@ class QdrantRetriever(BaseRetriever):
         message_output= llm.generate_content(query)
         text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
         logger.info(f"DEBUG: output of gneerate content is: {text_output}")
-
-        exp_embeddings_list = list(embedding_model.embed(text_output.splitlines()))
+        exp_embeddings_list = []
+        for generated_query in text_output.splitlines():
+            exp_embeddings_list.append(embedding_model.embed(generated_query))
         logger.info(f"DEBUG: exp_embeddings_list is: {exp_embeddings_list}")
 
-        #So we could use the scores to display a list of the top relevant documents on the side
+        prefetch_array = []
+        for embedding in exp_embeddings_list:
+            temp = models.Prefetch(
+                        query=embedding,
+                        limit=3,
+                    )
+            prefetch_array.append(temp)
         results = self.client.query_points(
             collection_name=self.retriever_config.collection_name,
-            prefetch=[
-                models.Prefetch(
-                    query=exp_embeddings_list[0],
-                    limit=3,
-                ),
-                models.Prefetch(
-                    query=exp_embeddings_list[1],
-                    limit=3,
-                ),
-                models.Prefetch(
-                    query=exp_embeddings_list[2],
-                    limit=3,
-                ),
-            ],
+            prefetch=prefetch_array,
             query=models.FusionQuery(fusion=models.Fusion.RRF),
             limit=3,
             with_payload=True,
         )
+
+        #So we could use the scores to display a list of the top relevant documents on the side
+        #results = self.client.query_points(
+        #    collection_name=self.retriever_config.collection_name,
+        #    prefetch=[
+        #        models.Prefetch(
+        #            query=exp_embeddings_list[0],
+        #            limit=3,
+        #        ),
+        #        models.Prefetch(
+        #            query=exp_embeddings_list[1],
+        #            limit=3,
+        #        ),
+        #        models.Prefetch(
+        #            query=exp_embeddings_list[2],
+        #            limit=3,
+        #        ),
+        #    ],
+        #    query=models.FusionQuery(fusion=models.Fusion.RRF),
+        #    limit=3,
+        #    with_payload=True,
+        #)
         # Search Qdrant for similar vectors.
         #results = self.client.search(
         #    collection_name=self.retriever_config.collection_name,
