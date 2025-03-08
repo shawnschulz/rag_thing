@@ -13,10 +13,19 @@ from langchain.chat_models import init_chat_model
 from google.generativeai.generative_models import ChatSession, GenerativeModel
 from google.generativeai.client import configure
 import structlog
+from flare_ai_rag.settings import settings
+import json
+
 
 logger = structlog.get_logger(__name__)
 
 from fastembed import TextEmbedding
+
+def load_json(file_path) -> dict:
+    """Read the selected model IDs from a JSON file."""
+    with file_path.open() as f:
+        return json.load(f)
+
 
 class QdrantRetriever(BaseRetriever):
     def __init__(
@@ -82,14 +91,18 @@ class QdrantRetriever(BaseRetriever):
         model_name=model_name,
         system_instruction=SYSTEM_INSTRUCTION,
         )
-        embedding_model = TextEmbedding("BAAI/bge-small-en-v1.5")
+        input_config = load_json(settings.input_path / "input_parameters.json")
+        logger.info("Loading Qdrant client...")
+        retriever_config = RetrieverConfig.load(input_config["retriever_config"])
 
         message_output= llm.generate_content(query)
         text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
         logger.info(f"DEBUG: output of gneerate content is: {text_output}")
         exp_embeddings_list = []
         for generated_query in text_output.splitlines():
-            exp_embeddings_list.append(embedding_model.embed(generated_query))
+            exp_embeddings_list.append(list(self.embedding_client.embed_content(embedding_model=retriever_config.embedding_model, 
+                                                                                contents=generated_query,task_type=EmbeddingTaskType.RETRIEVAL_QUERY)))
+
         logger.info(f"DEBUG: exp_embeddings_list is: {exp_embeddings_list}")
 
         prefetch_array = []
@@ -142,15 +155,22 @@ class QdrantRetriever(BaseRetriever):
         # and that should update the UI to have the document ranking 
         output = []
         for hit in results:
-            if hit.payload:
-                text = hit.payload.get("text", "")
-                metadata = {
-                    field: value
-                    for field, value in hit.payload.items()
-                    if field != "text"
-                }
-            else:
-                text = ""
-                metadata = ""
-            output.append({"text": text, "score": hit.score, "metadata": metadata})
+            logger.info(f"DEBUG: hit is: {hit}")
+
+        # Process and return results.
+        output = []
+        for ret_tuple in results:
+            if len(ret_tuple) > 1:
+                for hit in ret_tuple[1]:
+                    if hit.payload:
+                        text = hit.payload.get("text", "")
+                        metadata = {
+                            field: value
+                            for field, value in hit.payload.items()
+                            if field != "text"
+                        }
+                    else:
+                        text = ""
+                        metadata = ""
+                    output.append({"text": text, "score": hit.score, "metadata": metadata})
         return output
