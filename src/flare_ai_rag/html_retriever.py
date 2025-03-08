@@ -1,11 +1,10 @@
 from langchain_community.document_loaders import AsyncChromiumLoader
 from langchain_community.document_transformers import BeautifulSoupTransformer
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from Document import Document, Data
-from settings import settings
+from flare_ai_rag.settings import settings
 import json
 import uuid
-from ai import EmbeddingTaskType, GeminiEmbedding
+from flare_ai_rag.ai import EmbeddingTaskType, GeminiEmbedding
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 import structlog
 from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_collection
@@ -38,6 +37,8 @@ system_instruction=SYSTEM_INSTRUCTION,
 )
 
 use_llm_extractor = False
+
+logger = structlog.get_logger(__name__)
 
 def setup_argparse():
     parser = argparse.ArgumentParser(description='Crawl or scrape urls into the qdrant database')
@@ -312,7 +313,6 @@ if __name__ == "__main__":
         ]
     )
 
-    logger = structlog.get_logger(__name__)
 # Grab the qdrant client and 
     input_config = load_json(settings.input_path / "input_parameters.json")
     logger.info("Loading Qdrant client...")

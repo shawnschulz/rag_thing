@@ -10,7 +10,6 @@ import pandas as pd
 import structlog
 import uvicorn
 from fastapi import APIRouter, FastAPI
-from fastapi_utils.tasks import repeat_every
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
@@ -23,6 +22,8 @@ from flare_ai_rag.retriever import QdrantRetriever, RetrieverConfig, generate_co
 from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
+
+from flare_ai_rag.html_retriever import crawl_webpage
 
 logger = structlog.get_logger(__name__)
 
@@ -61,6 +62,9 @@ def setup_retriever(
         retriever_config,
         embedding_client=embedding_client,
     )
+    # Crawl 30 pages on flare.network/news on backend startup
+    crawl_webpage('https://flare.network/news', False, max_pages=30, class_grep="NewsPage")
+
     logger.info(
         "The Qdrant collection has been generated.",
         collection_name=retriever_config.collection_name,
@@ -113,6 +117,12 @@ def create_app() -> FastAPI:
     Returns:
         FastAPI: The configured FastAPI application instance.
     """
+
+    # For later: Track the type and number of Documents added to the database when the
+    # app is created, will need to create a route to render this on the client
+    documents_record = {}
+    
+
     app = FastAPI(title="RAG Knowledge API", version="1.0", redirect_slashes=False)
 
     # Optional: configure CORS middleware using settings.
@@ -139,6 +149,7 @@ def create_app() -> FastAPI:
 
     # 2b. Set up the Retriever.
     retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
+    documents_record['.mdx'] = 99 
 
     # 3. Set up the Responder.
     responder_component = setup_responder(input_config)

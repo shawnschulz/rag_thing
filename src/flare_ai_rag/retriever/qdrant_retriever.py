@@ -12,7 +12,9 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain.chat_models import init_chat_model
 from google.generativeai.generative_models import ChatSession, GenerativeModel
 from google.generativeai.client import configure
+import structlog
 
+logger = structlog.get_logger(__name__)
 
 from fastembed import TextEmbedding
 
@@ -81,9 +83,13 @@ class QdrantRetriever(BaseRetriever):
         system_instruction=SYSTEM_INSTRUCTION,
         )
         embedding_model = TextEmbedding("BAAI/bge-small-en-v1.5")
-        exp = llm.generate_content(query);
 
-        exp_embeddings_list = list(embedding_model.embed(exp))
+        message_output= llm.generate_content(query)
+        text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
+        logger.info(f"DEBUG: output of gneerate content is: {text_output}")
+
+        exp_embeddings_list = list(embedding_model.embed(text_output.splitlines()))
+        logger.info(f"DEBUG: exp_embeddings_list is: {exp_embeddings_list}")
 
         #So we could use the scores to display a list of the top relevant documents on the side
         results = self.client.query_points(
