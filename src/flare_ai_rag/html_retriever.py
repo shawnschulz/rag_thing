@@ -28,7 +28,7 @@ def setup_argparse():
                         type=str,  # Can change to int, float, etc.
                         help='Crawl from the specified url. Takes only one url')
     parser.add_argument('--class_grep',
-                        type=str,  # Can change to int, float, etc.
+                        type=str,  # Can change to int, float, etc.curl -LsSf https://astral.sh/uv/install.sh | sh
                         help='Use to specify a specific keyword in webpages to enter links under')
     
     return parser.parse_args()
@@ -56,13 +56,13 @@ urls = ['https://flare.network/news/shaping-the-future-of-blockchain-and-ai-flar
 
 from langchain.chat_models import init_chat_model
 
-def extract(content: str):
-    return prompt_template.invoke({"text": content}) 
+def extract(llm, content: str):
+    return llm.invoke(prompt_template.invoke({"text": content}));
 
 import pprint
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def crawl_webpage(url, max_pages=10, class_grep="none"):
+def crawl_webpage(url, llm, max_pages=10, class_grep="none"):
     """
     Thanks Claude!
 
@@ -160,7 +160,7 @@ def crawl_webpage(url, max_pages=10, class_grep="none"):
                         # Add to the queue if not visited yet
                         if absolute_link not in visited and absolute_link not in to_visit:
                             # Scrape the webpage if it wasn't visited yet
-                            payloads.append(scrape_with_playwright(absolute_link))
+                            payloads.append(scrape_with_playwright(absolute_link, llm))
                             to_visit.append(absolute_link)
                             count += 1
                             if count >= max_pages:
@@ -177,7 +177,7 @@ def crawl_webpage(url, max_pages=10, class_grep="none"):
     return payloads, visited
 # Takes a url and returns a payload to be upserted into qdrant vector database
 # Uses gemini for content extraction (albeit it doesn't particularly listen to me)
-def scrape_with_playwright(url):
+def scrape_with_playwright(url, llm):
     logger.info("Attempting to scrape urls.")
     urls = [url]
     loader = AsyncChromiumLoader(urls)
@@ -195,7 +195,7 @@ def scrape_with_playwright(url):
     splits = splitter.split_documents(docs_transformed)
 
     # Process the first split
-    extracted_content = extract(content=splits[0].page_content)
+    extracted_content = extract(llm, content=splits[0].page_content)
     message_output = extracted_content.to_messages()[1] 
     pprint.pprint(message_output.content)
     payload = {
@@ -285,7 +285,7 @@ if __name__ == "__main__":
     args = setup_argparse()
     if args.scrape is not None:
         urls = args.scrape
-        payloads = [scrape_with_playwright(url) for url in urls]
+        payloads = [scrape_with_playwright(url, llm) for url in urls]
         print(payloads)
         points = load_payloads_into_points(embedding_client, payloads)
         print(points)
@@ -293,11 +293,11 @@ if __name__ == "__main__":
     if args.crawl is not None:
         source_url = args.crawl
         if args.class_grep is not None:
-            payloads, _ = crawl_webpage(source_url, 10, args.class_grep)
+            payloads, _ = crawl_webpage(source_url, llm, 10, args.class_grep)
             points = load_payloads_into_points(embedding_client, payloads)
             upsert_database(qdrant_client, points)
         else:
-            payloads, _ = crawl_webpage(source_url)
+            payloads, _ = crawl_webpage(source_url, llm)
             points = load_payloads_into_points(embedding_client, payloads)
             upsert_database(qdrant_client, points)
 
