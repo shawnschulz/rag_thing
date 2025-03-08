@@ -93,7 +93,7 @@ class QdrantRetriever(BaseRetriever):
 
         #So we could use the scores to display a list of the top relevant documents on the side
         results = self.client.query_points(
-            collection_name="query_exp",
+            collection_name=self.retriever_config.collection_name,
             prefetch=[
                 models.Prefetch(
                     query=exp_embeddings_list[0],
