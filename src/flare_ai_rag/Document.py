@@ -13,6 +13,7 @@ class Document(BaseModel):
     # 1. Each field is an `optional` -- this allows the model to decline to extract it!
     # 2. Each field has a `description` -- this description is used by the LLM.
     # Having a good description can help improve extraction results.
+    prompt: str
     title: Optional[str] = Field(default=None, description="The title of the article or piece of documentation")
     body: Optional[str] = Field(
         default=None, description="The content of the article itself"

@@ -69,7 +69,7 @@ class QdrantRetriever(BaseRetriever):
 
         Return 3 versions of the question: {query} \
 
-        The Answer MUST be a list, clean your answer, trim them and don't add anything like bullets.""" \
+        The Answer MUST be a list, clean your answer, trim them and don't add anything like bullets.""" 
         prompt_template = ChatPromptTemplate.from_messages(
         [
             (

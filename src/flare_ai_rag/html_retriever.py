@@ -15,6 +15,26 @@ import requests
 from bs4 import BeautifulSoup
 import urllib.parse
 import argparse
+from google.generativeai.generative_models import ChatSession, GenerativeModel
+from google.generativeai.client import configure
+
+SYSTEM_INSTRUCTION = """
+You are an expert extraction algorithm. 
+Only extract relevant information from the text. 
+If you do not know the value of an attribute asked to extract, 
+return null for the attribute's value.
+
+When helping users:
+- Extract relevant information from web pages 
+- Only output the extracted information.
+
+"""
+model_name="gemini-1.5-flash"
+llm = GenerativeModel(
+model_name=model_name,
+system_instruction=SYSTEM_INSTRUCTION,
+)
+
 
 def setup_argparse():
     parser = argparse.ArgumentParser(description='Crawl or scrape urls into the qdrant database')
@@ -56,13 +76,13 @@ urls = ['https://flare.network/news/shaping-the-future-of-blockchain-and-ai-flar
 
 from langchain.chat_models import init_chat_model
 
-def extract(llm, content: str):
-    return llm.invoke(prompt_template.invoke({"text": content}));
+def extract(content: str):
+    return llm.generate_content(content);
 
 import pprint
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def crawl_webpage(url, llm, max_pages=10, class_grep="none"):
+def crawl_webpage(url, max_pages=10, class_grep="none"):
     """
     Thanks Claude!
 
@@ -160,7 +180,7 @@ def crawl_webpage(url, llm, max_pages=10, class_grep="none"):
                         # Add to the queue if not visited yet
                         if absolute_link not in visited and absolute_link not in to_visit:
                             # Scrape the webpage if it wasn't visited yet
-                            payloads.append(scrape_with_playwright(absolute_link, llm))
+                            payloads.append(scrape_with_playwright(absolute_link))
                             to_visit.append(absolute_link)
                             count += 1
                             if count >= max_pages:
@@ -177,7 +197,7 @@ def crawl_webpage(url, llm, max_pages=10, class_grep="none"):
     return payloads, visited
 # Takes a url and returns a payload to be upserted into qdrant vector database
 # Uses gemini for content extraction (albeit it doesn't particularly listen to me)
-def scrape_with_playwright(url, llm):
+def scrape_with_playwright(url):
     logger.info("Attempting to scrape urls.")
     urls = [url]
     loader = AsyncChromiumLoader(urls)
@@ -195,14 +215,21 @@ def scrape_with_playwright(url, llm):
     splits = splitter.split_documents(docs_transformed)
 
     # Process the first split
-    extracted_content = extract(llm, content=splits[0].page_content)
-    message_output = extracted_content.to_messages()[1] 
-    pprint.pprint(message_output.content)
-    payload = {
-        "filename": url,
-        "metadata": message_output.response_metadata,
-        "text": message_output.content,
-    }
+    extracted_content = extract(content=splits[0].page_content)
+    message_output = extracted_content
+    payload = {}
+    text_output = message_output.to_dict()['candidates'][0]['content']['parts'][0]['text']
+    #try: 
+    #    payload = json.loads(text_output)
+    #except json.JSONDecodeError:
+    #    print("Failed to decode to json, adding to payload as text")
+
+    # Just put the text in the bag
+    payload['text'] = text_output 
+
+    payload['filename'] = url
+    payload['metadata'] = str(message_output.usage_metadata)
+    #pprint.pprint(payload)
     return payload 
 
 def string_to_int_hash(input_string, hash_bits=64):
@@ -270,8 +297,7 @@ if __name__ == "__main__":
             ("user", "{text}"),
         ]
     )
-    llm = init_chat_model("gemini-1.5-flash", model_provider="google_genai")
-    structured_llm = llm.with_structured_output(schema=Document)
+
     logger = structlog.get_logger(__name__)
 # Grab the qdrant client and 
     input_config = load_json(settings.input_path / "input_parameters.json")
@@ -285,7 +311,7 @@ if __name__ == "__main__":
     args = setup_argparse()
     if args.scrape is not None:
         urls = args.scrape
-        payloads = [scrape_with_playwright(url, llm) for url in urls]
+        payloads = [scrape_with_playwright(url) for url in urls]
         print(payloads)
         points = load_payloads_into_points(embedding_client, payloads)
         print(points)
@@ -293,11 +319,11 @@ if __name__ == "__main__":
     if args.crawl is not None:
         source_url = args.crawl
         if args.class_grep is not None:
-            payloads, _ = crawl_webpage(source_url, llm, 10, args.class_grep)
+            payloads, _ = crawl_webpage(source_url, 10, args.class_grep)
             points = load_payloads_into_points(embedding_client, payloads)
             upsert_database(qdrant_client, points)
         else:
-            payloads, _ = crawl_webpage(source_url, llm)
+            payloads, _ = crawl_webpage(source_url)
             points = load_payloads_into_points(embedding_client, payloads)
             upsert_database(qdrant_client, points)
 
