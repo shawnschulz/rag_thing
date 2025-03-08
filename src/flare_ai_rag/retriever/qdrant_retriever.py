@@ -100,8 +100,15 @@ class QdrantRetriever(BaseRetriever):
         logger.info(f"DEBUG: output of gneerate content is: {text_output}")
         exp_embeddings_list = []
         for generated_query in text_output.splitlines():
+            if len(generated_query) != 0:
+                exp_embeddings_list.append(list(self.embedding_client.embed_content(embedding_model=retriever_config.embedding_model, 
+                                                                                    contents=generated_query,task_type=EmbeddingTaskType.RETRIEVAL_QUERY)))
+            else:
+                pass
+        if len(exp_embeddings_list) == 0:
             exp_embeddings_list.append(list(self.embedding_client.embed_content(embedding_model=retriever_config.embedding_model, 
-                                                                                contents=generated_query,task_type=EmbeddingTaskType.RETRIEVAL_QUERY)))
+                                                                                contents=query,task_type=EmbeddingTaskType.RETRIEVAL_QUERY)))
+
 
         logger.info(f"DEBUG: exp_embeddings_list is: {exp_embeddings_list}")
 
@@ -112,6 +119,7 @@ class QdrantRetriever(BaseRetriever):
                         limit=3,
                     )
             prefetch_array.append(temp)
+
         results = self.client.query_points(
             collection_name=self.retriever_config.collection_name,
             prefetch=prefetch_array,
@@ -119,34 +127,6 @@ class QdrantRetriever(BaseRetriever):
             limit=3,
             with_payload=True,
         )
-
-        #So we could use the scores to display a list of the top relevant documents on the side
-        #results = self.client.query_points(
-        #    collection_name=self.retriever_config.collection_name,
-        #    prefetch=[
-        #        models.Prefetch(
-        #            query=exp_embeddings_list[0],
-        #            limit=3,
-        #        ),
-        #        models.Prefetch(
-        #            query=exp_embeddings_list[1],
-        #            limit=3,
-        #        ),
-        #        models.Prefetch(
-        #            query=exp_embeddings_list[2],
-        #            limit=3,
-        #        ),
-        #    ],
-        #    query=models.FusionQuery(fusion=models.Fusion.RRF),
-        #    limit=3,
-        #    with_payload=True,
-        #)
-        # Search Qdrant for similar vectors.
-        #results = self.client.search(
-        #    collection_name=self.retriever_config.collection_name,
-        #    query_vector=query_vector,
-        #    limit=top_k,
-        #)
 
         # Idea: Output the document relevance rankings in the UI somehow
         # Process and return results. To do this I think a jank way is to

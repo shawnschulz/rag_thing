@@ -1,3 +1,65 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.top_document {
+    width: 25em; 
+    min-height: 40em;
+    background: #282c34;
+    border-radius: 2em !important;
+    position:absolute;
+    box-sizeing: border-box;
+    padding: 2em;
+    color: #fffffa;
+    margin: 3em 1em;
+}
+
+.top_document p {
+    line-height: 25px;
+    font-size: 0.9em;
+}
+
+
+.top_document .try_button {
+    position: absolute;
+    bottom: 1.2em;
+    left:5em;
+    text-decoration: none;
+    color: #fffffa;
+    background: #000;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    padding: 0.7em 1.3em;
+    border-radius: 3em;
+}
+
+.extraction_dashboard {
+    width: 25em; 
+    min-height: 40em;
+    background: #282c34;
+    left: 83em;
+    border-radius: 2em !important;
+    position:absolute;
+    box-sizeing: border-box;
+    padding: 2em;
+    color: #fffffa;
+    margin: 3em 1em;
+}
+
+.extraction_dashboard p {
+    line-height: 25px;
+    font-size: 0.9em;
+}
+
+
+.extraction_dashboard .try_button {
+    position: absolute;
+    bottom: 1.2em;
+    left:5em;
+    text-decoration: none;
+    color: #fffffa;
+    background: #000;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    padding: 0.7em 1.3em;
+    border-radius: 3em;
+}
+

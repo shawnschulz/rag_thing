@@ -22,6 +22,13 @@ const ChatInterface = () => {
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const [topDocuments, setTopDocuments] = useState([
+      {
+          file_name: "",
+          score: "", 
+      }
+  ]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -110,6 +117,9 @@ const ChatInterface = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
+      <div class='top_document'>
+      <p> Top documents from most recent query: </p>
+      </div>
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
         <div className="bg-pink-600 text-white p-4">
@@ -187,6 +197,32 @@ const ChatInterface = () => {
             </button>
           </form>
         </div>
+      <div class='extraction_dashboard'>
+      <p> Extraction Dashboard </p>
+      <p> Database last updated: </p>
+      <p name = "last_updated_label" value = ""> </p>
+      
+      <input type="checkbox" id="scrape_input" name="scrape_input" value=""/>
+      <label for="vehicle1"> Preprocess Extractions with gemini-1.5-flash</label>
+      <p> </p>
+      <label for="scrape_input"> Input urls to scrape into vector database </label>
+      <textarea name="Text1" cols="30" rows="5"></textarea>
+      <select name="crawl_depth" id="crawl_depth">
+          <option value="5">Crawl 5 webpages deep</option>
+          <option value="10">Crawl 10 webpages deep</option>
+          <option value="30">Crawl 30 webpages deep</option>
+        </select>
+      <p> </p>
+      <label for="crawl_input"> Input a single url to crawl </label>
+      <input type="text" id="crawl_input" name="crawl_input" value=""/>
+      <p> </p>
+          <div class="database_stats">
+          <label for="database_data" value =""> Database statistics: </label>
+          <p class = "wepbage_stat" value = ""> webpages:  </p>
+          <p class = ".mdx_stat" value = ""> mdx files:  </p>
+          </div>
+      <button> Run extraction </button>
+      </div>
       </div>
     </div>
   );

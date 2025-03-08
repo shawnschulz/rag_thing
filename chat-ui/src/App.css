@@ -36,3 +36,33 @@
     transform: rotate(360deg);
   }
 }
+
+.top_document {
+    width: 50em; 
+    min-height: 27em;
+    background: #ac63c7;
+    border-radius: 2em !important;
+    position: relative;
+    box-sizeing: border-box;
+    padding: 2em;
+    color: #fffffa;
+    margin: 3em 0em;
+}
+
+.top_document p {
+    line-height: 25px;
+    font-size: 0.9em;
+}
+
+
+.top_document .try_button {
+    position: absolute;
+    bottom: 1.2em;
+    left:5em;
+    text-decoration: none;
+    color: #fffffa;
+    background: #000;
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+    padding: 0.7em 1.3em;
+    border-radius: 3em;
+}

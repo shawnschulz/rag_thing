@@ -62,8 +62,6 @@ def setup_retriever(
         retriever_config,
         embedding_client=embedding_client,
     )
-    # Crawl 30 pages on flare.network/news on backend startup
-    crawl_webpage('https://flare.network/news', False, max_pages=5, class_grep="NewsPage")
 
     logger.info(
         "The Qdrant collection has been generated.",
@@ -149,6 +147,9 @@ def create_app() -> FastAPI:
 
     # 2b. Set up the Retriever.
     retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
+
+    # Crawl 30 pages on flare.network/news on backend startup
+    crawl_webpage('https://flare.network/news', False, max_pages=5, class_grep="NewsPage")
 
     # If have time make this not static
     documents_record['.mdx'] = 99 
