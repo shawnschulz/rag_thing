@@ -5,9 +5,12 @@ from pydantic import BaseModel, Field
 from flare_ai_rag.ai import GeminiProvider
 from flare_ai_rag.attestation import Vtpm, VtpmAttestationError
 from flare_ai_rag.prompts import PromptService, SemanticRouterResponse
+from flare_ai_rag.prompts.schemas import ExtractionPipelineResponse
 from flare_ai_rag.responder import GeminiResponder
 from flare_ai_rag.retriever import QdrantRetriever
 from flare_ai_rag.router import GeminiRouter
+
+import json
 
 logger = structlog.get_logger(__name__)
 router = APIRouter()
@@ -95,6 +98,23 @@ class ChatRouter:
             except Exception as e:
                 self.logger.exception("Chat processing failed", error=str(e))
                 raise HTTPException(status_code=500, detail=str(e)) from e
+        @self._router.post("/extraction_pipeline")
+        async def extraction_pipeline(requested_data) -> dict[str, str]:
+            """
+            Extract data into the vector database using retrievers based on the given data in requested_data
+            For now values requested_data can only be a list of urls, but could change later
+            """
+            try:
+                self.logger.debug("Received extraction pipeline request", message=requested_data.data)
+
+
+                route = await self.get_extraction_route(requested_data.data)
+                return await self.route_extraction_pipeline(route, requested_data.data)
+
+            except Exception as e:
+                self.logger.exception("Running extraction pipeline failed", error=str(e))
+                raise HTTPException(status_code=500, detail=str(e)) from e
+           return {} 
 
     @property
     def router(self) -> APIRouter:
@@ -122,6 +142,32 @@ class ChatRouter:
         except Exception as e:
             self.logger.exception("routing_failed", error=str(e))
             return SemanticRouterResponse.CONVERSATIONAL
+
+    async def route_extraction_pipeline(
+        self, route: ExtractionPipelineResponse, message: str
+    ) -> dict[str, str]:
+        """
+        Route a message to the appropriate handler based on semantic route.
+
+        Args:
+            route: Determined semantic route
+            message: Original message to handle
+
+        Returns:
+            dict[str, str]: Response from the appropriate handler
+        """
+        # TODO: actually handle the routes by defining similar handle methods to the semantic router
+        handlers = {
+            ExtractionPipelineResponse.REQUEST_HTML_DATA: self.handle_html_extraction,
+            ExtractionPipelineResponse.REQUEST_GITHUB_DATA: self.handle_github_extraction,
+            ExtractionPipelineResponse.REQUEST_BIGQUERY_DATA: self.handle_bigquery_extraction,
+        }
+
+        handler = handlers.get(route)
+        if not handler:
+            return {"response": "Unsupported route"}
+
+        return await handler(message)
 
     async def route_message(
         self, route: SemanticRouterResponse, message: str
@@ -174,11 +220,18 @@ class ChatRouter:
             # Step 2. Retrieve relevant documents.
             retrieved_docs = self.retriever.semantic_search(_, top_k=5)
             self.logger.info("Documents retrieved")
+            top_doc_name_score = {}
+            for doc in retrieved_docs:
+                doc_name = doc['filename']
+                top_doc_name_score[doc_name] = doc['score']
+            
+            # Stringify the doc record
+            record_string = json.dumps(top_doc_name_score)
 
             # Step 3. Generate the final answer.
             answer = self.responder.generate_response(_, retrieved_docs)
             self.logger.info("Response generated", answer=answer)
-            return {"classification": classification, "response": answer}
+            return {"classification": classification, "response": answer, "doc_scores": record_string}
 
         # Map static responses for CLARIFY and REJECT.
         static_responses = {

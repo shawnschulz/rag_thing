@@ -14,6 +14,22 @@ from enum import Enum
 from string import Template
 from typing import TypedDict
 
+class ExtractionPipelineResponse(str, Enum):
+    """
+    Enumeration of possible extraction pipeline outcomes for user queries.
+
+    This enum defines the various types of operations that can be triggered
+    based on user input pipeline. Each value represents a specific action
+    or response type that the system can handle.
+
+    Attributes:
+        REQUEST_HTML_DATA: Route to html retriever request handling
+        REQUEST_GITHUB_DATA: Route to github retriever request handling 
+        REQUEST_BIGQUERY_DATA: Route to BIGQUERY retriever request data 
+    """
+    REQUEST_HTML_DATA = "RequestHTMLData"
+    REQUEST_GITHUB_DATA = "RequestGithubData"
+    REQUEST_BIGQUERY_DATA = "RequestBigQueryData" 
 
 class SemanticRouterResponse(str, Enum):
     """

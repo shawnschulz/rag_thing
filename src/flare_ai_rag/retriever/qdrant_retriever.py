@@ -49,6 +49,7 @@ class QdrantRetriever(BaseRetriever):
         :param top_k: Number of top results to return.
         :return: A list of dictionaries, each representing a retrieved document.
         """
+
         # Convert the query into a vector embedding using Gemini
         query_vector = self.embedding_client.embed_content(
             embedding_model="models/text-embedding-004",
@@ -144,6 +145,7 @@ class QdrantRetriever(BaseRetriever):
                 for hit in ret_tuple[1]:
                     if hit.payload:
                         text = hit.payload.get("text", "")
+                        file_name = hit.payload.get("file_name", "")
                         metadata = {
                             field: value
                             for field, value in hit.payload.items()
@@ -152,5 +154,6 @@ class QdrantRetriever(BaseRetriever):
                     else:
                         text = ""
                         metadata = ""
-                    output.append({"text": text, "score": hit.score, "metadata": metadata})
+                        file_name = ""
+                    output.append({"text": text, "score": hit.score,  "metadata": metadata, "file_name":file_name})
         return output
