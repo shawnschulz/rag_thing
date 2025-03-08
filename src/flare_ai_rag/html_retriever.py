@@ -19,16 +19,17 @@ import argparse
 def setup_argparse():
     parser = argparse.ArgumentParser(description='Crawl or scrape urls into the qdrant database')
     
-    # Add an argument that takes a single value
     parser.add_argument('--scrape', 
                         type=str,  # Can change to int, float, etc.
                         nargs='+',  # '+' means one or more arguments
                         help='Scrape any number of urls.')
     
-    # Add an argument that can take multiple values (a list)
     parser.add_argument('--crawl',
                         type=str,  # Can change to int, float, etc.
                         help='Crawl from the specified url. Takes only one url')
+    parser.add_argument('--class_grep',
+                        type=str,  # Can change to int, float, etc.
+                        help='Use to specify a specific keyword in webpages to enter links under')
     
     return parser.parse_args()
 
@@ -61,7 +62,7 @@ def extract(content: str):
 import pprint
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def crawl_webpage(url, max_pages=10):
+def crawl_webpage(url, max_pages=10, class_grep="none"):
     """
     Thanks Claude!
 
@@ -111,11 +112,37 @@ def crawl_webpage(url, max_pages=10):
                 'links': []
             }
             
-            # Find all links on the page
-            elements_with_news_class = soup.find_all(class_=lambda c: c and "NewsPage" in c)
+            # Find all links under a class with a specific name
+            elements_with_news_class = soup.find_all(class_=lambda c: c and class_grep in c)
 
-            for element in elements_with_news_class:
-                for link in element.find_all('a', href=True):
+            if class_grep != 'none':
+                for element in elements_with_news_class:
+                    for link in element.find_all('a', href=True):
+                        href = link['href']
+                        
+                        # Skip empty links, javascript, and anchors
+                        if not href or href.startswith('javascript:') or href.startswith('#'):
+                            continue
+                        
+                        # Convert relative URLs to absolute
+                        absolute_link = urllib.parse.urljoin(current_url, href)
+                        
+                        # Only follow links to the same domain
+                        if urllib.parse.urlparse(absolute_link).netloc == urllib.parse.urlparse(current_url).netloc:
+                            # Add link to the list of links on the current page
+                            visited[current_url]['links'].append(absolute_link)
+                            
+                            # Add to the queue if not visited yet
+                            if absolute_link not in visited and absolute_link not in to_visit:
+                                # Scrape the webpage if it wasn't visited yet
+                                payloads.append(scrape_with_playwright(absolute_link))
+                                to_visit.append(absolute_link)
+                                count += 1
+                                if count >= max_pages:
+                                    return payloads, visited
+            # Find all links 
+            if class_grep == 'none':
+                for link in soup.find_all('a', href=True):
                     href = link['href']
                     
                     # Skip empty links, javascript, and anchors
@@ -265,7 +292,12 @@ if __name__ == "__main__":
         upsert_database(qdrant_client, points)
     if args.crawl is not None:
         source_url = args.crawl
-        payloads, _ = crawl_webpage(source_url)
-        points = load_payloads_into_points(embedding_client, payloads)
-        upsert_database(qdrant_client, points)
+        if args.class_grep is not None:
+            payloads, _ = crawl_webpage(source_url, 10, args.class_grep)
+            points = load_payloads_into_points(embedding_client, payloads)
+            upsert_database(qdrant_client, points)
+        else:
+            payloads, _ = crawl_webpage(source_url)
+            points = load_payloads_into_points(embedding_client, payloads)
+            upsert_database(qdrant_client, points)
 
