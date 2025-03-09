@@ -26,6 +26,12 @@ const ChatInterface = () => {
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const [doc1, setdoc1] = useState('');
+  const [doc2, setdoc2] = useState('');
+  const [doc3, setdoc3] = useState('');
+  const [doc4, setdoc4] = useState('');
+  const [doc5, setdoc5] = useState('');
+
   const [topDocuments, setTopDocuments] = useState([
       {
           file_name: "",
@@ -62,6 +68,13 @@ const ChatInterface = () => {
         setAwaitingConfirmation(true);
         setPendingTransaction(text);
       }
+      const doc_scores_dict = JSON.parse(data.doc_scores);
+      const keys = Object.keys(doc_scores_dict);
+        setdoc1(keys[0] + "\n" + "Similarity Score: " + doc_scores_dict[keys[0]])
+        setdoc2(keys[1] + "\n" + "Similarity Score: " + doc_scores_dict[keys[1]])
+        setdoc3(keys[2] + "\n" + "Similarity Score: " + doc_scores_dict[keys[2]])
+        setdoc4(keys[3] + "\n" + "Similarity Score: " + doc_scores_dict[keys[3]])
+        setdoc5(keys[4] + "\n" + "Similarity Score: " + doc_scores_dict[keys[4]])
 
       return data.response;
     } catch (error) {
@@ -190,6 +203,11 @@ const ChatInterface = () => {
     <div className="flex flex-col h-screen bg-gray-100">
       <div class='top_document'>
       <p> Top documents from most recent query: </p>
+      <p> {doc1} </p>
+      <p> {doc2} </p>
+      <p> {doc3} </p>
+      <p> {doc4} </p>
+      <p> {doc5} </p>
       </div>
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
