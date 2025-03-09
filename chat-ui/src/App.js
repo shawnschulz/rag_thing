@@ -21,6 +21,7 @@ const ChatInterface = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const messagesEndRef = useRef(null);
@@ -76,6 +77,7 @@ const ChatInterface = () => {
   const [use_llm, set_use_llm] = useState(false);
 
   const handleRunExtraction = async () => {
+      setIsExtracting(true);
     try {
       const response = await fetch(EXTRACTION_ROUTE, {
         method: 'POST',
@@ -86,13 +88,16 @@ const ChatInterface = () => {
       });
 
       if (!response.ok) {
+          setIsExtracting(false);
         throw new Error('Network response was not ok');
       }
 
       const data = await response.json();
+          setIsExtracting(false);
       return data.response;
     } catch (error) {
       console.error('Error:', error);
+          setIsExtracting(false);
       return 'Sorry, there was an error processing your request. Please try again.';
     }
   };
@@ -106,8 +111,24 @@ const ChatInterface = () => {
       }));
       console.log(extraction_data);
   }
+  const handleCrawlUpdateExtractionPipeline = async (e) => {
+      var new_data = {"urls":e}
+      new_data['use_llm'] = use_llm;
+      set_extraction_data(extraction_data=> ({
+        ...extraction_data,  // Spread the previous dictionary
+        ['scrape']: new_data // Add or update the new key-value pair
+      }));
+      console.log(extraction_data);
+  }
 
     const textArea = document.querySelector('textarea');
+    if (textArea) {
+        textArea.addEventListener('change', (e) => {
+          // Process the entire text without splitting by newlines
+          handleScrapeUpdateExtractionPipeline(e.target.value);
+        });
+    }
+    const input = document.querySelector('input');
     if (textArea) {
         textArea.addEventListener('change', (e) => {
           // Process the entire text without splitting by newlines
@@ -272,7 +293,7 @@ const ChatInterface = () => {
           <p class = "wepbage_stat" value = ""> webpages:  </p>
           <p class = ".mdx_stat" value = ""> mdx files:  </p>
           </div>
-      <button onClick={handleRunExtraction} disabled={isLoading}> Run extraction {isLoading ? 'Running Extraction Pipeline...' : '' } </button>
+      <button onClick={handleRunExtraction} disabled={isLoading}> Run extraction {isExtracting ? 'Running Extraction Pipeline...' : '' } </button>
       </div>
       </div>
     </div>

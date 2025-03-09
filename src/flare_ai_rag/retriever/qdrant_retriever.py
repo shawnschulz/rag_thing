@@ -156,4 +156,5 @@ class QdrantRetriever(BaseRetriever):
                         metadata = ""
                         file_name = ""
                     output.append({"text": text, "score": hit.score,  "metadata": metadata, "file_name":file_name})
+        logger.info(f"DEBUG: output is: {output}")
         return output

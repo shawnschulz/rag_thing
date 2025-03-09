@@ -212,7 +212,7 @@ class ChatRouter:
 
         return await handler(message)
 
-    async def handle_rag_pipeline(self, message: str) -> dict[str, str]:
+    async def handle_rag_pipeline(self, _: str) -> dict[str, str]:
         """
         Handle attestation requests.
 
@@ -235,9 +235,11 @@ class ChatRouter:
             retrieved_docs = self.retriever.semantic_search(_, top_k=5)
             self.logger.info("Documents retrieved")
             top_doc_name_score = {}
-            for doc in retrieved_docs:
-                doc_name = doc['filename']
-                top_doc_name_score[doc_name] = doc['score']
+            for idx, doc in enumerate(retrieved_docs, start=1):
+                identifier = doc.get("metadata", {}).get("filename", f"Doc{idx}")
+                score = doc.get("metadata", {}).get("score", f"Doc{idx}")
+                top_doc_name_score[identifier] = score
+
             
             # Stringify the doc record
             record_string = json.dumps(top_doc_name_score)
