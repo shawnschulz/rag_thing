@@ -23,7 +23,16 @@ from flare_ai_rag.router import GeminiRouter, RouterConfig
 from flare_ai_rag.settings import settings
 from flare_ai_rag.utils import load_json
 
+from pydantic import BaseModel
+
 from flare_ai_rag.html_retriever import crawl_webpage
+
+# Should this go in main? no. but i don't care
+class ExtractionResponse(BaseModel):
+    web_crawl: dict | None = None
+    scrape: dict | None = None
+
+
 
 logger = structlog.get_logger(__name__)
 
@@ -151,7 +160,7 @@ def create_app() -> FastAPI:
     # Crawl 30 pages on flare.network/news on backend startup
     crawl_webpage('https://flare.network/news', False, max_pages=5, class_grep="NewsPage")
 
-    # If have time make this not static
+    # Later send this via web socket connection 
     documents_record['.mdx'] = 99 
     documents_record['webpage'] = 30
 
@@ -172,8 +181,29 @@ def create_app() -> FastAPI:
 
     return app
 
-
 app = create_app()
+
+@app.post("/extraction")
+async def run_extration_pipeline(pipeline_json: ExtractionResponse):
+    if "web_crawl" in pipeline_json:
+        try:
+            web_crawl_config = pipeline_json['web_crawl']
+            for url in pipeline_json['web_crawl']['urls']:
+                # Make sure the front end actually sends this data lolol
+                crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
+            return {"response": "Succesfully crawled webpage"}
+        except:
+            self.logger.exception("Something went wrong with crawling webpage")
+            return {"response": "Error in webpage crawling"}
+    if "scrape" in pipeline_json: 
+        try: 
+            for url in pipeline_json['scrape']['urls']:
+                scrape_with_playwright(url, pipeline_json['scrape']['use_llm'])
+            return {"response": "Sucessfully scraped webpage"}
+        except:
+            self.logger.exception("Something went wrong with scraping webpage")
+            return {"response": "Error in webpage scraping"}
+    return {"response": "No urls to crawl, did not run extraction"}
 
 #@app.on_event('startup')
 #@repeat_every(seconds=3)

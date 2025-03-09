@@ -5,8 +5,11 @@ import './index.css';
 
 // Uncomment on deploy
 // const BACKEND_ROUTE = "api/routes/chat/";
+// const EXTRACTION_ROUTE = "extraction";
 // Comment on deploy
 const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
+// Bad bad, skeptical this will work when we change it to the other route
+const EXTRACTION_ROUTE ="http://127.0.0.1:8080/extraction"; 
 
 
 const ChatInterface = () => {
@@ -65,6 +68,43 @@ const ChatInterface = () => {
       return 'Sorry, there was an error processing your request. Please try again.';
     }
   };
+
+  const [extraction_data, set_extraction_data] = useState({});
+  const [extraction_key, set_extraction_key] = useState("");
+  const [extraction_value, set_extraction_value] = useState("");
+  const [use_llm, set_use_llm] = useState(false);
+
+  const handleRunExtraction = async () => {
+    try {
+      const response = await fetch(EXTRACTION_ROUTE, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(extraction_data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.error('Error:', error);
+      return 'Sorry, there was an error processing your request. Please try again.';
+    }
+  };
+
+  const handleScrapeUpdateExtractionPipeline = async (e) => {
+      var new_data = {"urls":e}
+      new_data['use_llm'] = use_llm;
+      if (key.trim() !== '') {
+      setDictionary(extraction_data=> ({
+        ...extraction_data,  // Spread the previous dictionary
+        ['scrape']: new_data // Add or update the new key-value pair
+      }));
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -214,14 +254,14 @@ const ChatInterface = () => {
         </select>
       <p> </p>
       <label for="crawl_input"> Input a single url to crawl </label>
-      <input type="text" id="crawl_input" name="crawl_input" value=""/>
+      <input type="text" id="crawl_input" name="crawl_input" value="" onChange={handleScrapeUpdateExtractionPipeline}/>
       <p> </p>
           <div class="database_stats">
           <label for="database_data" value =""> Database statistics: </label>
           <p class = "wepbage_stat" value = ""> webpages:  </p>
           <p class = ".mdx_stat" value = ""> mdx files:  </p>
           </div>
-      <button> Run extraction </button>
+      <button onClick={handleRunExtraction} disabled={isLoading}> Run extraction {isLoading ? 'Running Extraction Pipeline...' : '' } </button>
       </div>
       </div>
     </div>

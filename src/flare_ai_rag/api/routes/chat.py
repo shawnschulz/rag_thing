@@ -9,6 +9,8 @@ from flare_ai_rag.prompts.schemas import ExtractionPipelineResponse
 from flare_ai_rag.responder import GeminiResponder
 from flare_ai_rag.retriever import QdrantRetriever
 from flare_ai_rag.router import GeminiRouter
+from flare_ai_rag.html_retriever import scrape_with_playwright
+from flare_ai_rag.html_retriever import crawl_webpage 
 
 import json
 
@@ -98,23 +100,7 @@ class ChatRouter:
             except Exception as e:
                 self.logger.exception("Chat processing failed", error=str(e))
                 raise HTTPException(status_code=500, detail=str(e)) from e
-        @self._router.post("/extraction_pipeline")
-        async def extraction_pipeline(requested_data) -> dict[str, str]:
-            """
-            Extract data into the vector database using retrievers based on the given data in requested_data
-            For now values requested_data can only be a list of urls, but could change later
-            """
-            try:
-                self.logger.debug("Received extraction pipeline request", message=requested_data.data)
 
-
-                route = await self.get_extraction_route(requested_data.data)
-                return await self.route_extraction_pipeline(route, requested_data.data)
-
-            except Exception as e:
-                self.logger.exception("Running extraction pipeline failed", error=str(e))
-                raise HTTPException(status_code=500, detail=str(e)) from e
-           return {} 
 
     @property
     def router(self) -> APIRouter:
@@ -143,6 +129,18 @@ class ChatRouter:
             self.logger.exception("routing_failed", error=str(e))
             return SemanticRouterResponse.CONVERSATIONAL
 
+    async def get_extraction_route(self, message: str) -> ExtractionPipelineResponse:
+        """
+        Determine the route for an extraction pipeline.
+
+        Args:
+            message: Message to route
+
+        Returns:
+            SemanticRouterResponse: Determined route for the message
+        """
+        return ExtractionPipelineResponse(message)
+
     async def route_extraction_pipeline(
         self, route: ExtractionPipelineResponse, message: str
     ) -> dict[str, str]:
@@ -159,8 +157,6 @@ class ChatRouter:
         # TODO: actually handle the routes by defining similar handle methods to the semantic router
         handlers = {
             ExtractionPipelineResponse.REQUEST_HTML_DATA: self.handle_html_extraction,
-            ExtractionPipelineResponse.REQUEST_GITHUB_DATA: self.handle_github_extraction,
-            ExtractionPipelineResponse.REQUEST_BIGQUERY_DATA: self.handle_bigquery_extraction,
         }
 
         handler = handlers.get(route)
@@ -168,6 +164,28 @@ class ChatRouter:
             return {"response": "Unsupported route"}
 
         return await handler(message)
+
+    async def handle_html_extraction(self, message: str) -> dict[str,str]:
+        pipeline_json = json.loads(message);
+        if "web_crawl" in pipeline_json:
+            try:
+                web_crawl_config = pipeline_json['web_crawl']
+                for url in pipeline_json['web_crawl']['urls']:
+                    # Make sure the front end actually sends this data lolol
+                    crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
+                return {"response": "Succesfully crawled webpage"}
+            except:
+                self.logger.exception("Something went wrong with crawling webpage")
+                return {"response": "Error in webpage crawling"}
+        if "scrape" in pipeline_json: 
+            try: 
+                for url in pipeline_json['scrape']['urls']:
+                    scrape_with_playwright(url, pipeline_json['scrape']['use_llm'])
+                return {"response": "Sucessfully scraped webpage"}
+            except:
+                self.logger.exception("Something went wrong with scraping webpage")
+                return {"response": "Error in webpage scraping"}
+        return {"response": "No urls to crawl, did not run extraction"}
 
     async def route_message(
         self, route: SemanticRouterResponse, message: str
@@ -194,7 +212,7 @@ class ChatRouter:
 
         return await handler(message)
 
-    async def handle_rag_pipeline(self, _: str) -> dict[str, str]:
+    async def handle_rag_pipeline(self, message: str) -> dict[str, str]:
         """
         Handle attestation requests.
 
@@ -204,10 +222,6 @@ class ChatRouter:
         Returns:
             dict[str, str]: Response containing attestation request
         """
-
-        # Should edit this route to include information about the top documents retrieved,
-        # and make sure the front end client updates that part of the ui along with 
-        # the messages in the chatbot
 
         # Step 1. Classify the user query.
         prompt, mime_type, schema = self.prompts.get_formatted_prompt("rag_router")
