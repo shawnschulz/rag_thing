@@ -37,6 +37,8 @@ model_name=model_name,
 system_instruction=SYSTEM_INSTRUCTION,
 )
 
+
+
 use_llm_extractor = False
 
 logger = structlog.get_logger(__name__)
@@ -74,6 +76,10 @@ def load_json(file_path) -> dict:
     """Read the selected model IDs from a JSON file."""
     with file_path.open() as f:
         return json.load(f)
+
+logger.info("Qdrant Client loaded")
+# Just hard code this for now
+embedding_client = GeminiEmbedding(GEMINI_API_KEY)
 
 
 # These variables should eventually be handled by config files or user input
@@ -260,10 +266,13 @@ def scrape_list_of_urls(urls):
     pass
 
 
-def load_payloads_into_points(embedding_client, payloads):
+def load_payloads_into_points(payloads, embedding_client=embedding_client):
     logger.info("Attempting to load scraped payloads into vectors.")
     points = []
+    logger.info(f"Payloads: {payloads}")
+    logger.info(f"Payloads type: {type(payloads)}")
     for payload in payloads:
+        logger.info(f"Current payload: {payload}")
         json_string = json.dumps(payload)
 
         generated_uuid = uuid.uuid5(uuid.NAMESPACE_URL, json_string)
@@ -284,9 +293,12 @@ def load_payloads_into_points(embedding_client, payloads):
         points.append(point)
     return points
 
+input_config = load_json(settings.input_path / "input_parameters.json")
+retriever_config = RetrieverConfig.load(input_config["retriever_config"])
+qdrant_client = QdrantClient(host=retriever_config.host, port=retriever_config.port)
 
 # Upserts the points into the qdrant database
-def upsert_database(qdrant_client, points) -> None:
+def upsert_database(points, qdrant_client=qdrant_client) -> None:
     logger.info("Attempting to load vectors into database.")
     qdrant_client.upsert(
         collection_name=retriever_config.collection_name,
@@ -315,13 +327,7 @@ if __name__ == "__main__":
     )
 
 # Grab the qdrant client and 
-    input_config = load_json(settings.input_path / "input_parameters.json")
     logger.info("Loading Qdrant client...")
-    retriever_config = RetrieverConfig.load(input_config["retriever_config"])
-    qdrant_client = QdrantClient(host=retriever_config.host, port=retriever_config.port)
-    logger.info("Qdrant Client loaded")
-# Just hard code this for now
-    embedding_client = GeminiEmbedding(GEMINI_API_KEY)
 
     args = setup_argparse()
     if args.llm_extraction:
@@ -330,17 +336,17 @@ if __name__ == "__main__":
         urls = args.scrape
         payloads = [scrape_with_playwright(url) for url in urls]
         print(payloads)
-        points = load_payloads_into_points(embedding_client, payloads)
+        points = load_payloads_into_points(payloads)
         print(points)
-        upsert_database(qdrant_client, points)
+        upsert_database(points, qdrant_client)
     if args.crawl is not None:
         source_url = args.crawl
         if args.class_grep is not None:
             payloads, _ = crawl_webpage(source_url, use_llm_extractor, 10, args.class_grep)
-            points = load_payloads_into_points(embedding_client, payloads)
-            upsert_database(qdrant_client, points)
+            points = load_payloads_into_points(payloads, embedding_client)
+            upsert_database(points, qdrant_client)
         else:
             payloads, _ = crawl_webpage(source_url)
-            points = load_payloads_into_points(embedding_client, payloads)
-            upsert_database(qdrant_client, points)
+            points = load_payloads_into_points(payloads, embedding_client)
+            upsert_database(points, qdrant_client)
 

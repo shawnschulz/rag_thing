@@ -27,8 +27,9 @@ from pydantic import BaseModel
 
 from flare_ai_rag.html_retriever import crawl_webpage
 from flare_ai_rag.html_retriever import scrape_with_playwright 
+from flare_ai_rag.html_retriever import load_payloads_into_points 
+from flare_ai_rag.html_retriever import upsert_database 
 
-# This is not a good idea to nest asyncio event loops, but a hack-y solution
 import nest_asyncio
 nest_asyncio.apply()
 
@@ -159,11 +160,14 @@ def create_app() -> FastAPI:
     # 2a. Set up Qdrant client.
     qdrant_client = setup_qdrant(input_config)
 
+    # Crawl 30 pages on flare.network/news on backend startup
+    #payloads, _ = crawl_webpage('https://flare.network/news', False, max_pages=5, class_grep="NewsPage")
+    #points = load_payloads_into_points(payloads)
+    #upsert_database(points)
+
     # 2b. Set up the Retriever.
     retriever_component = setup_retriever(qdrant_client, input_config, df_docs)
 
-    # Crawl 30 pages on flare.network/news on backend startup
-    crawl_webpage('https://flare.network/news', False, max_pages=5, class_grep="NewsPage")
 
     # Later send this via web socket connection 
     documents_record['.mdx'] = 99 
@@ -196,7 +200,9 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
             web_crawl_config = pipeline_json.web_crawl
             for url in pipeline_json.web_crawl['urls'].splitlines():
                 # Make sure the front end actually sends this data lolol
-                crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
+                payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
+                points = load_payloads_into_points(payloads)
+                upsert_database(points)
             return {"response": "Succesfully crawled webpage"}
         except:
             logger.exception("Something went wrong with crawling webpage")
@@ -204,7 +210,10 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
     if pipeline_json.scrape is not None: 
         try: 
             for url in pipeline_json.scrape['urls'].splitlines():
-                scrape_with_playwright(url, pipeline_json.scrape['use_llm'])
+                payloads = scrape_with_playwright(url, pipeline_json.scrape['use_llm'])
+                logger.info(f"payloads are: {payloads}")
+                points = load_payloads_into_points([payloads])
+                upsert_database(points)
             return {"response": "Sucessfully scraped webpage"}
         except:
             logger.exception("Something went wrong with scraping webpage")
