@@ -70,11 +70,11 @@ const ChatInterface = () => {
       }
       const doc_scores_dict = JSON.parse(data.doc_scores);
       const keys = Object.keys(doc_scores_dict);
-        setdoc1(keys[0] + "\n" + "Similarity Score: " + doc_scores_dict[keys[0]])
-        setdoc2(keys[1] + "\n" + "Similarity Score: " + doc_scores_dict[keys[1]])
-        setdoc3(keys[2] + "\n" + "Similarity Score: " + doc_scores_dict[keys[2]])
-        setdoc4(keys[3] + "\n" + "Similarity Score: " + doc_scores_dict[keys[3]])
-        setdoc5(keys[4] + "\n" + "Similarity Score: " + doc_scores_dict[keys[4]])
+        setdoc1("[" + keys[0] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[0]])
+        setdoc2("[" + keys[1] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[1]])
+        setdoc3("[" + keys[2] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[2]])
+        setdoc4("[" + keys[3] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[3]])
+        setdoc5("[" + keys[4] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[4]])
 
       return data.response;
     } catch (error) {
@@ -125,11 +125,16 @@ const ChatInterface = () => {
       console.log(extraction_data);
   }
   const handleCrawlUpdateExtractionPipeline = async (e) => {
+      var depth = document.getElementById("crawl_depth");
+      var value = depth.value;
+      var text = depth.options[depth.selectedIndex].text;
+      var num = parseInt(text);
       var new_data = {"urls":e}
       new_data['use_llm'] = use_llm;
+      new_data['max_pages'] = num;
       set_extraction_data(extraction_data=> ({
         ...extraction_data,  // Spread the previous dictionary
-        ['scrape']: new_data // Add or update the new key-value pair
+        ['web_crawl']: new_data // Add or update the new key-value pair
       }));
       console.log(extraction_data);
   }
@@ -141,11 +146,11 @@ const ChatInterface = () => {
           handleScrapeUpdateExtractionPipeline(e.target.value);
         });
     }
-    const input = document.querySelector('input');
-    if (textArea) {
-        textArea.addEventListener('change', (e) => {
+    const input = document.querySelector('input[name="crawl_input"]')
+    if (input) {
+        input.addEventListener('change', (e) => {
           // Process the entire text without splitting by newlines
-          handleScrapeUpdateExtractionPipeline(e.target.value);
+          handleCrawlUpdateExtractionPipeline(e.value);
         });
     }
 
@@ -206,8 +211,6 @@ const ChatInterface = () => {
       <p> {doc1} </p>
       <p> {doc2} </p>
       <p> {doc3} </p>
-      <p> {doc4} </p>
-      <p> {doc5} </p>
       </div>
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
@@ -304,14 +307,14 @@ const ChatInterface = () => {
         </select>
       <p> </p>
       <label for="crawl_input"> Input a single url to crawl </label>
-      <input type="text" id="crawl_input" name="crawl_input" />
+      <input type="text" class = "crawl_input" id="crawl_input" onChange={(e) => handleCrawlUpdateExtractionPipeline(e.target.value)} name="crawl_input" />
       <p> </p>
           <div class="database_stats">
           <label for="database_data" value =""> Database statistics: </label>
           <p class = "wepbage_stat" value = ""> webpages:  </p>
           <p class = ".mdx_stat" value = ""> mdx files:  </p>
           </div>
-      <button onClick={handleRunExtraction} disabled={isLoading}> Run extraction {isExtracting ? 'Running Extraction Pipeline...' : '' } </button>
+      <button onClick={handleRunExtraction} disabled={isExtracting}> Run extraction {isExtracting ? 'Running Extraction Pipeline...' : '' } </button>
       </div>
       </div>
     </div>

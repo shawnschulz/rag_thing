@@ -237,7 +237,7 @@ class ChatRouter:
             top_doc_name_score = {}
             for idx, doc in enumerate(retrieved_docs, start=1):
                 identifier = doc.get("metadata", {}).get("filename", f"Doc{idx}")
-                score = doc.get("metadata", {}).get("score", f"Doc{idx}")
+                score = doc.get("score")
                 top_doc_name_score[identifier] = score
 
             

@@ -100,7 +100,7 @@ import pprint
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 # The string "NewsPage" works well for crawling https://flare.network/news
-def crawl_webpage(url, use_llm_extractor=use_llm_extractor, max_pages=10, class_grep="none"):
+def crawl_webpage(url, use_llm_extractor=use_llm_extractor, max_pages=30, class_grep="NewsPage"):
     """
     Thanks Claude!
 
