@@ -43,6 +43,7 @@ COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # Copy frontend files
+COPY --from=frontend-builder /chat_ui/src/veccy.png /frontend/src
 COPY --from=frontend-builder /frontend/build /usr/share/nginx/html
 
 # Copy nginx configuration
