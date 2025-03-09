@@ -5,12 +5,12 @@ import './index.css';
 import veccy from './veccy.png';
 
 // Uncomment on deploy
-// const BACKEND_ROUTE = "api/routes/chat/";
-// const EXTRACTION_ROUTE = "extraction";
+ const BACKEND_ROUTE = "api/routes/chat/";
+ const EXTRACTION_ROUTE = "extraction";
 // Comment on deploy
-const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
+//const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
 // Bad bad, skeptical this will work when we change it to the other route
-const EXTRACTION_ROUTE ="http://127.0.0.1:8080/extraction"; 
+//const EXTRACTION_ROUTE ="http://127.0.0.1:8080/extraction"; 
 
 
 const ChatInterface = () => {
