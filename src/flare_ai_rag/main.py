@@ -188,7 +188,7 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
     if "web_crawl" in pipeline_json:
         try:
             web_crawl_config = pipeline_json['web_crawl']
-            for url in pipeline_json['web_crawl']['urls']:
+            for url in pipeline_json['web_crawl']['urls'].splitlines():
                 # Make sure the front end actually sends this data lolol
                 crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
             return {"response": "Succesfully crawled webpage"}
@@ -197,7 +197,7 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
             return {"response": "Error in webpage crawling"}
     if "scrape" in pipeline_json: 
         try: 
-            for url in pipeline_json['scrape']['urls']:
+            for url in pipeline_json['scrape']['urls'].splitlines():
                 scrape_with_playwright(url, pipeline_json['scrape']['use_llm'])
             return {"response": "Sucessfully scraped webpage"}
         except:

@@ -72,6 +72,7 @@ const ChatInterface = () => {
   const [extraction_data, set_extraction_data] = useState({});
   const [extraction_key, set_extraction_key] = useState("");
   const [extraction_value, set_extraction_value] = useState("");
+  const [scrape_urls, set_scrape_urls] = useState([]);
   const [use_llm, set_use_llm] = useState(false);
 
   const handleRunExtraction = async () => {
@@ -103,7 +104,9 @@ const ChatInterface = () => {
         ...extraction_data,  // Spread the previous dictionary
         ['scrape']: new_data // Add or update the new key-value pair
       }));
+      console.log(extraction_data);
   }
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -241,19 +244,20 @@ const ChatInterface = () => {
       <p> Database last updated: </p>
       <p name = "last_updated_label" value = ""> </p>
       
-      <input type="checkbox" id="scrape_input" name="scrape_input" value=""/>
+      <input type="checkbox" id="scrape_input" name="scrape_input" />
       <label for="vehicle1"> Preprocess Extractions with gemini-1.5-flash</label>
       <p> </p>
       <label for="scrape_input"> Input urls to scrape into vector database </label>
-      <textarea name="Text1" cols="30" rows="5"></textarea>
+      <textarea name="Text1" cols="30" rows="5"  onChange={(e) => handleScrapeUpdateExtractionPipeline(e.target.value)} ></textarea>
       <select name="crawl_depth" id="crawl_depth">
+          <option value="1">Crawl 1 webpage deep</option>
           <option value="5">Crawl 5 webpages deep</option>
           <option value="10">Crawl 10 webpages deep</option>
           <option value="30">Crawl 30 webpages deep</option>
         </select>
       <p> </p>
       <label for="crawl_input"> Input a single url to crawl </label>
-      <input type="text" id="crawl_input" name="crawl_input" value="" onChange={handleScrapeUpdateExtractionPipeline}/>
+      <input type="text" id="crawl_input" name="crawl_input" />
       <p> </p>
           <div class="database_stats">
           <label for="database_data" value =""> Database statistics: </label>

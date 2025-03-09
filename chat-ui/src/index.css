@@ -62,4 +62,18 @@
     padding: 0.7em 1.3em;
     border-radius: 3em;
 }
+button {
+    padding: 0.3em 0.3em;
+    background: #e82c6b;
+    border-radius: 1em;
 
+}
+select {
+    background: #e82c6b;
+}
+textarea {
+    background: #595357;
+}
+input {
+    background: #595357;
+}
