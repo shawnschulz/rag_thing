@@ -195,7 +195,7 @@ app = create_app()
 @app.post("/extraction")
 async def run_extration_pipeline(pipeline_json: ExtractionResponse):
     logger.info(f"Trying to run extraction pipeline on this data: {pipeline_json}")
-    if pipeline_json.web_crawl is not None:
+    if pipeline_json.web_crawl is not None and pipeline_json.web_crawl['urls'] != '':
         try:
             logger.exception(f"webcrawl is {pipeline_json}")
             web_crawl_config = pipeline_json.web_crawl
