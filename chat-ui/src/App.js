@@ -26,12 +26,12 @@ const ChatInterface = () => {
   const [pendingTransaction, setPendingTransaction] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const [doc1, setdoc1] = useState('');
-  const [doc2, setdoc2] = useState('');
-  const [doc3, setdoc3] = useState('');
-  const [score1, setscore1] = useState('');
-  const [score2, setscore2] = useState('');
-  const [score3, setscore3] = useState('');
+  const [doc1, setdoc1] = useState('Top Document 1:');
+  const [doc2, setdoc2] = useState('Top Document 2:');
+  const [doc3, setdoc3] = useState('Top Document 3:');
+  const [score1, setscore1] = useState('Score 1: ');
+  const [score2, setscore2] = useState('Score 2: ');
+  const [score3, setscore3] = useState('Score 3: ');
 
   const [topDocuments, setTopDocuments] = useState([
       {
@@ -207,7 +207,6 @@ const ChatInterface = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       <div class='top_document'>
-      <p> Top documents from most recent query: </p>
       <p class="top_docs"> {doc1} </p>
       <p class="top_docs"> {score1} </p>
       <p class="top_docs"> {doc2} </p>
@@ -219,7 +218,7 @@ const ChatInterface = () => {
         {/* Header */}
         <div className="bg-pink-600 text-white p-4">
           <h1 className="text-xl font-bold"></h1>
-          <p className="text-sm opacity-80">(Based on Flare Dev Hub)</p>
+          <p className="text-sm opacity-80"></p>
         </div>
 
         {/* Messages container */}
@@ -293,8 +292,6 @@ const ChatInterface = () => {
           </form>
         </div>
       <div class='extraction_dashboard'>
-      <p> Extraction Dashboard </p>
-      <p> Database last updated: </p>
       <p name = "last_updated_label" value = ""> </p>
       
       <input type="checkbox" id="scrape_input" name="scrape_input" />
@@ -307,11 +304,9 @@ const ChatInterface = () => {
       <input type="text" class = "crawl_input" id="crawl_input" onChange={(e) => handleCrawlUpdateExtractionPipeline(e.target.value)} name="crawl_input" />
       <p> </p>
           <div class="database_stats">
-          <label for="database_data" value =""> Database statistics: </label>
-          <p class = "wepbage_stat" value = ""> webpages:  </p>
-          <p class = ".mdx_stat" value = ""> mdx files:  </p>
           </div>
-      <button onClick={handleRunExtraction} disabled={isExtracting}> Run extraction {isExtracting ? 'Running Extraction Pipeline...' : '' } </button>
+      <p> </p>
+      <button class='run_button'  onClick={handleRunExtraction} disabled={isExtracting}> Run extraction {isExtracting ? 'Running Extraction Pipeline...' : '' } </button>
       </div>
       </div>
     </div>

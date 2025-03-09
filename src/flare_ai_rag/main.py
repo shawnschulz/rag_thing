@@ -9,7 +9,7 @@ Gemini-based Router, Retriever, and Responder components into a chat endpoint.
 import pandas as pd
 import structlog
 import uvicorn
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from qdrant_client import QdrantClient
 
@@ -200,10 +200,11 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
             logger.exception(f"webcrawl is {pipeline_json}")
             web_crawl_config = pipeline_json.web_crawl
             for url in pipeline_json.web_crawl['urls'].splitlines():
-                # Make sure the front end actually sends this data lolol
-                payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], 30, "NewsPage") 
-                points = load_payloads_into_points(payloads)
-                upsert_database(points)
+                if len(url) != 0:
+                    # Make sure the front end actually sends this data lolol
+                    payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], 30, "NewsPage") 
+                    points = load_payloads_into_points(payloads)
+                    upsert_database(points)
             return {"response": "Succesfully crawled webpage"}
         except:
             logger.exception("Something went wrong with crawling webpage")
@@ -220,6 +221,7 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
             logger.exception("Something went wrong with scraping webpage")
             return {"response": "Error in webpage scraping"}
     return {"response": "No urls to crawl, did not run extraction"}
+
 
 #@app.on_event('startup')
 #@repeat_every(seconds=3)

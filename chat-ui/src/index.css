@@ -12,22 +12,28 @@
 
 
 .top_document {
+    z-index: 0;
     min-height: 52.2em;
     width: 27em; 
-    font-size: 24;
-    background: #282c34;
+    background: #050c1f;
     position:absolute;
     box-sizeing: border-box;
     padding: 0.7em 1.3em;
     color: #fffffa;
+    border-radius:0.1em;
+    padding-top: 7em;
+    padding-bottom: 7em;
+    border-color:#a60a50;
+    border-width: .1em;
+    border-radius:0.2em;
 }
 
 .top_document p {
     line-height: 25px;
-    font-size: 1em;
+    font-size: 0.9em;
 }
 .top_docs {
-    background: #000;
+    background: #a60a50;
     border-radius:0.5em;
     bottom:1em;
     padding: 0.7em 1.3em;
@@ -35,38 +41,38 @@
 }
 
 
-.top_document .try_button {
-    position: absolute;
-    bottom: 1.2em;
-    left:5em;
-    text-decoration: none;
-    color: #fffffa;
-    background: #000;
-    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
-    padding: 0.7em 1.3em;
-    border-radius: 3em;
-}
 
 .extraction_dashboard {
+    z-index: 0;
     min-height: 52.2em;
-    background: #282c34;
-    left: 83em;
+    width: 27.2em;
+    background: #050c1f;
+    left: 82.5em;
     position:absolute;
     box-sizeing: border-box;
-    padding: 2em;
+    padding: 2em 2em 2em 2em;
     color: #fffffa;
-    font-size: 1em;
+    border-color:#a60a50;
+    border-width: .1em;
+    border-radius:0.2em;
 }
 
+.extraction_dashboard label {
+    padding: 0.15em 0.15em;
+    border-radius:0.15em;
+}
 .extraction_dashboard p {
-    line-height: 25px;
+    font-size: 3em;
+    padding-top:2em;
+    line-height: 50px;
 }
 
-
-button {
-    padding: 0.3em 0.3em;
-    background: #e82c6b;
+.run_button {
+    padding: 0.1em 0.1em;
+    height:2.5em;
+    background: #a60a50;
     border-radius: 1em;
+    width: 20em;
 
 }
 select {
@@ -80,4 +86,28 @@ input {
 }
 .class_grep {
     width: 3em;
+}
+
+.bg-white {
+    background-color: #050c1f;
+    width: 80em;
+}
+.bg-pink-600 {
+    background-color: #a60a50;
+}
+.flex-1 overflow-y-auto p-4 space-y-4 {
+    border-style: none;
+}
+.border-t border-gray-200 p-4 {
+    border-color: #000;
+}
+.flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent {
+    border-radius: 0em;
+}
+.border-gray-200 {
+    border-color: #a60a50;
+}
+.bg-gray-100 {
+    color: #fff;
+    background-color: #a60a50;
 }
