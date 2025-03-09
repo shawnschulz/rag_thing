@@ -12,7 +12,10 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 RUN uv venv .venv && \
     . .venv/bin/activate && \
-    uv pip install -e .
+    uv pip install -e . && \
+    uv pip install -q langchain-openai langchain playwright beautifulsoup4 langchain-google-genai pydantic structlog google-generativeai fastembed langchain-core langchain_community tiktoken nest-asyncio && \
+    playwright install
+
 
 # Stage 3: Final Image
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
