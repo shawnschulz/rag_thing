@@ -169,6 +169,7 @@ class ChatRouter:
         pipeline_json = json.loads(message);
         if "web_crawl" in pipeline_json:
             try:
+                logger.info(f"pipeline_json: {pipeline_json}")
                 web_crawl_config = pipeline_json['web_crawl']
                 for url in pipeline_json['web_crawl']['urls']:
                     # Make sure the front end actually sends this data lolol

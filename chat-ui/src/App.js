@@ -29,8 +29,9 @@ const ChatInterface = () => {
   const [doc1, setdoc1] = useState('');
   const [doc2, setdoc2] = useState('');
   const [doc3, setdoc3] = useState('');
-  const [doc4, setdoc4] = useState('');
-  const [doc5, setdoc5] = useState('');
+  const [score1, setscore1] = useState('');
+  const [score2, setscore2] = useState('');
+  const [score3, setscore3] = useState('');
 
   const [topDocuments, setTopDocuments] = useState([
       {
@@ -68,13 +69,16 @@ const ChatInterface = () => {
         setAwaitingConfirmation(true);
         setPendingTransaction(text);
       }
+        if ('doc_scores' in data) {
       const doc_scores_dict = JSON.parse(data.doc_scores);
       const keys = Object.keys(doc_scores_dict);
-        setdoc1("[" + keys[0] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[0]])
-        setdoc2("[" + keys[1] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[1]])
-        setdoc3("[" + keys[2] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[2]])
-        setdoc4("[" + keys[3] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[3]])
-        setdoc5("[" + keys[4] + "]" + "\n" + "Similarity Score: " + doc_scores_dict[keys[4]])
+        setdoc1(keys[0])
+        setscore1("Similarity Score: " + doc_scores_dict[keys[0]])
+        setdoc2(keys[1])
+        setscore2("Similarity Score: " + doc_scores_dict[keys[1]])
+        setdoc3(keys[2])
+        setscore3("Similarity Score: " + doc_scores_dict[keys[2]])
+        }
 
       return data.response;
     } catch (error) {
@@ -125,13 +129,9 @@ const ChatInterface = () => {
       console.log(extraction_data);
   }
   const handleCrawlUpdateExtractionPipeline = async (e) => {
-      var depth = document.getElementById("crawl_depth");
-      var value = depth.value;
-      var text = depth.options[depth.selectedIndex].text;
-      var num = parseInt(text);
       var new_data = {"urls":e}
       new_data['use_llm'] = use_llm;
-      new_data['max_pages'] = num;
+      //new_data['max_pages'] = num;
       set_extraction_data(extraction_data=> ({
         ...extraction_data,  // Spread the previous dictionary
         ['web_crawl']: new_data // Add or update the new key-value pair
@@ -150,7 +150,7 @@ const ChatInterface = () => {
     if (input) {
         input.addEventListener('change', (e) => {
           // Process the entire text without splitting by newlines
-          handleCrawlUpdateExtractionPipeline(e.value);
+          handleCrawlUpdateExtractionPipeline(e.target.value);
         });
     }
 
@@ -208,14 +208,17 @@ const ChatInterface = () => {
     <div className="flex flex-col h-screen bg-gray-100">
       <div class='top_document'>
       <p> Top documents from most recent query: </p>
-      <p> {doc1} </p>
-      <p> {doc2} </p>
-      <p> {doc3} </p>
+      <p class="top_docs"> {doc1} </p>
+      <p class="top_docs"> {score1} </p>
+      <p class="top_docs"> {doc2} </p>
+      <p class="top_docs"> {score2} </p>
+      <p class="top_docs"> {doc3} </p>
+      <p class="top_docs"> {score3} </p>
       </div>
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
         <div className="bg-pink-600 text-white p-4">
-          <h1 className="text-xl font-bold">Flare AI RAG</h1>
+          <h1 className="text-xl font-bold"></h1>
           <p className="text-sm opacity-80">(Based on Flare Dev Hub)</p>
         </div>
 
@@ -299,12 +302,6 @@ const ChatInterface = () => {
       <p> </p>
       <label for="scrape_input"> Input urls to scrape into vector database </label>
       <textarea name="textArea" cols="30" rows="5"  onChange={(e) => handleScrapeUpdateExtractionPipeline(e.target.value)} ></textarea>
-      <select name="crawl_depth" id="crawl_depth">
-          <option value="1">Crawl 1 webpage deep</option>
-          <option value="5">Crawl 5 webpages deep</option>
-          <option value="10">Crawl 10 webpages deep</option>
-          <option value="30">Crawl 30 webpages deep</option>
-        </select>
       <p> </p>
       <label for="crawl_input"> Input a single url to crawl </label>
       <input type="text" class = "crawl_input" id="crawl_input" onChange={(e) => handleCrawlUpdateExtractionPipeline(e.target.value)} name="crawl_input" />

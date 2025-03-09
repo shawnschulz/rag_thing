@@ -197,10 +197,11 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
     logger.info(f"Trying to run extraction pipeline on this data: {pipeline_json}")
     if pipeline_json.web_crawl is not None:
         try:
+            logger.exception(f"webcrawl is {pipeline_json}")
             web_crawl_config = pipeline_json.web_crawl
             for url in pipeline_json.web_crawl['urls'].splitlines():
                 # Make sure the front end actually sends this data lolol
-                payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
+                payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], 30, "NewsPage") 
                 points = load_payloads_into_points(payloads)
                 upsert_database(points)
             return {"response": "Succesfully crawled webpage"}
