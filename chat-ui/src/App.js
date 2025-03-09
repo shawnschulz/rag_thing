@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import './index.css';
+import veccy from './veccy.png';
 
 // Uncomment on deploy
 // const BACKEND_ROUTE = "api/routes/chat/";
@@ -217,6 +218,7 @@ const ChatInterface = () => {
       <div className="flex flex-col h-full max-w-4xl mx-auto w-full shadow-lg bg-white">
         {/* Header */}
         <div className="bg-pink-600 text-white p-4">
+      <img src={veccy}/>
           <h1 className="text-xl font-bold"></h1>
           <p className="text-sm opacity-80"></p>
         </div>

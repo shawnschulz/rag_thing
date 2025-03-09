@@ -111,3 +111,7 @@ input {
     color: #fff;
     background-color: #a60a50;
 }
+img {
+    width: 80px;
+    height: 80px;
+}
