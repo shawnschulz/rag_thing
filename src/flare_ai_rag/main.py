@@ -26,6 +26,7 @@ from flare_ai_rag.utils import load_json
 from pydantic import BaseModel
 
 from flare_ai_rag.html_retriever import crawl_webpage
+from flare_ai_rag.html_retriever import scrape_with_playwright 
 
 # Should this go in main? no. but i don't care
 class ExtractionResponse(BaseModel):
@@ -185,23 +186,24 @@ app = create_app()
 
 @app.post("/extraction")
 async def run_extration_pipeline(pipeline_json: ExtractionResponse):
-    if "web_crawl" in pipeline_json:
+    logger.info(f"Trying to run extraction pipeline on this data: {pipeline_json}")
+    if pipeline_json.web_crawl is not None:
         try:
-            web_crawl_config = pipeline_json['web_crawl']
-            for url in pipeline_json['web_crawl']['urls'].splitlines():
+            web_crawl_config = pipeline_json.web_crawl
+            for url in pipeline_json.web_crawl['urls'].splitlines():
                 # Make sure the front end actually sends this data lolol
                 crawl_webpage(url, web_crawl_config['use_llm'], web_crawl_config['max_pages'], web_crawl_config['class_grep']) 
             return {"response": "Succesfully crawled webpage"}
         except:
-            self.logger.exception("Something went wrong with crawling webpage")
+            logger.exception("Something went wrong with crawling webpage")
             return {"response": "Error in webpage crawling"}
-    if "scrape" in pipeline_json: 
+    if pipeline_json.scrape is not None: 
         try: 
-            for url in pipeline_json['scrape']['urls'].splitlines():
-                scrape_with_playwright(url, pipeline_json['scrape']['use_llm'])
+            for url in pipeline_json.scrape['urls'].splitlines():
+                scrape_with_playwright(url, pipeline_json.scrape['use_llm'])
             return {"response": "Sucessfully scraped webpage"}
         except:
-            self.logger.exception("Something went wrong with scraping webpage")
+            logger.exception("Something went wrong with scraping webpage")
             return {"response": "Error in webpage scraping"}
     return {"response": "No urls to crawl, did not run extraction"}
 

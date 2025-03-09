@@ -72,7 +72,7 @@ const ChatInterface = () => {
   const [extraction_data, set_extraction_data] = useState({});
   const [extraction_key, set_extraction_key] = useState("");
   const [extraction_value, set_extraction_value] = useState("");
-  const [scrape_urls, set_scrape_urls] = useState([]);
+  const [scrape_urls, set_scrape_urls] = useState("");
   const [use_llm, set_use_llm] = useState(false);
 
   const handleRunExtraction = async () => {
@@ -107,6 +107,13 @@ const ChatInterface = () => {
       console.log(extraction_data);
   }
 
+    const textArea = document.querySelector('textarea');
+    if (textArea) {
+        textArea.addEventListener('change', (e) => {
+          // Process the entire text without splitting by newlines
+          handleScrapeUpdateExtractionPipeline(e.target.value);
+        });
+    }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -138,6 +145,7 @@ const ChatInterface = () => {
 
     setIsLoading(false);
   };
+
 
   // Custom components for ReactMarkdown
   const MarkdownComponents = {
@@ -248,7 +256,7 @@ const ChatInterface = () => {
       <label for="vehicle1"> Preprocess Extractions with gemini-1.5-flash</label>
       <p> </p>
       <label for="scrape_input"> Input urls to scrape into vector database </label>
-      <textarea name="Text1" cols="30" rows="5"  onChange={(e) => handleScrapeUpdateExtractionPipeline(e.target.value)} ></textarea>
+      <textarea name="textArea" cols="30" rows="5"  onChange={(e) => handleScrapeUpdateExtractionPipeline(e.target.value)} ></textarea>
       <select name="crawl_depth" id="crawl_depth">
           <option value="1">Crawl 1 webpage deep</option>
           <option value="5">Crawl 5 webpages deep</option>
