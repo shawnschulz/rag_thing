@@ -4,7 +4,7 @@
 # rag-thing
 
 ```
-pip install -q langchain-openai langchain playwright beautifulsoup4 langchain-google-genai pydantic structlog google-generativeai fastembed langchain-core langchain_community tiktoken
+pip install -q langchain-openai langchain playwright beautifulsoup4 langchain-google-genai pydantic structlog google-generativeai fastembed langchain-core langchain_community tiktoken nest-asyncio
 
 playwright install
 ```

@@ -28,6 +28,10 @@ from pydantic import BaseModel
 from flare_ai_rag.html_retriever import crawl_webpage
 from flare_ai_rag.html_retriever import scrape_with_playwright 
 
+# This is not a good idea to nest asyncio event loops, but a hack-y solution
+import nest_asyncio
+nest_asyncio.apply()
+
 # Should this go in main? no. but i don't care
 class ExtractionResponse(BaseModel):
     web_crawl: dict | None = None

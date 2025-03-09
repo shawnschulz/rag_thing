@@ -16,6 +16,7 @@ import urllib.parse
 import argparse
 from google.generativeai.generative_models import ChatSession, GenerativeModel
 from google.generativeai.client import configure
+import asyncio
 
 SYSTEM_INSTRUCTION = """
 You are an expert extraction algorithm. 
