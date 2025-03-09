@@ -99,8 +99,7 @@ const ChatInterface = () => {
   const handleScrapeUpdateExtractionPipeline = async (e) => {
       var new_data = {"urls":e}
       new_data['use_llm'] = use_llm;
-      if (key.trim() !== '') {
-      setDictionary(extraction_data=> ({
+      set_extraction_data(extraction_data=> ({
         ...extraction_data,  // Spread the previous dictionary
         ['scrape']: new_data // Add or update the new key-value pair
       }));
