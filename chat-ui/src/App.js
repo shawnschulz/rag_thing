@@ -5,12 +5,12 @@ import './index.css';
 import veccy from './veccy.png';
 
 // Uncomment on deploy
- const BACKEND_ROUTE = "api/routes/chat/";
- const EXTRACTION_ROUTE = "extraction";
+const BACKEND_ROUTE = "api/routes/chat/";
+const EXTRACTION_ROUTE = "extraction";
 // Comment on deploy
-//const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
+// const BACKEND_ROUTE = "http://localhost:8080/api/routes/chat/";
 // Bad bad, skeptical this will work when we change it to the other route
-//const EXTRACTION_ROUTE ="http://127.0.0.1:8080/extraction"; 
+// const EXTRACTION_ROUTE ="http://127.0.0.1:8080/extraction"; 
 
 
 const ChatInterface = () => {
@@ -154,6 +154,10 @@ const ChatInterface = () => {
           handleCrawlUpdateExtractionPipeline(e.target.value);
         });
     }
+    const handleCheckbox = (e) => {
+        set_use_llm(e);
+        console.log(use_llm);
+    }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -296,7 +300,7 @@ const ChatInterface = () => {
       <div class='extraction_dashboard'>
       <p name = "last_updated_label" value = ""> </p>
       
-      <input type="checkbox" id="scrape_input" name="scrape_input" />
+      <input type="checkbox" id="scrape_input" name="scrape_input" onChange={(e) => handleCheckbox(e.target.checked)}/>
       <label for="vehicle1"> Preprocess Extractions with gemini-1.5-flash</label>
       <p> </p>
       <label for="scrape_input"> Input urls to scrape into vector database </label>

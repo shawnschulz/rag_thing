@@ -202,7 +202,7 @@ async def run_extration_pipeline(pipeline_json: ExtractionResponse):
             for url in pipeline_json.web_crawl['urls'].splitlines():
                 if len(url) != 0:
                     # Make sure the front end actually sends this data lolol
-                    payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], 30, "NewsPage") 
+                    payloads, _= crawl_webpage(url, web_crawl_config['use_llm'], 30, "News") 
                     points = load_payloads_into_points(payloads)
                     upsert_database(points)
             return {"response": "Succesfully crawled webpage"}
